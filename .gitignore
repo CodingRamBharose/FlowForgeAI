@@ -1,74 +1,22 @@
-############################
 # Dependencies
-############################
 node_modules/
-.pnp/
-.pnp.js
+frontend/node_modules/
+backend/node_modules/
 
-############################
-# Build outputs
-############################
-dist/
-dist-ssr/
-build/
-out/
-coverage/
-
-############################
-# Logs
-############################
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-############################
-# Environment variables
-############################
+# Environment
 .env
-.env.*
-!.env.example
+backend/.env
 
-############################
-# Local / runtime files
-############################
-*.local
-*.pid
-*.seed
-*.lock
+# Build output
+frontend/dist/
 
-############################
-# OS files
-############################
+# IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
 Thumbs.db
 
-############################
-# Editor / IDE files
-############################
-.vscode/*
-!.vscode/extensions.json
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-############################
-# Cache directories
-############################
-.cache/
-.npm/
-.eslintcache
-.stylelintcache
-.parcel-cache/
-
-############################
-# Framework-specific
-############################
-.next/
-.nuxt
+# Logs
+*.log
