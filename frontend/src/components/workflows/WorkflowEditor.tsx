@@ -40,7 +40,7 @@ export const WorkflowEditor: React.FC = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [loading, setLoading] = useState(true);
 
-    const isNewWorkflow = id === 'new';
+    const isNewWorkflow = !id;
     const canEdit = checkPermission(Permission.WORKFLOW_EDIT);
     const canPublish = checkPermission(Permission.WORKFLOW_PUBLISH);
 
@@ -83,7 +83,8 @@ export const WorkflowEditor: React.FC = () => {
         };
 
         loadWorkflow();
-    }, [id, isNewWorkflow, workflows, dispatch, navigate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, dispatch]);
 
     const handleSave = () => {
         if (!canEdit) {

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store';
 import { addNotification, NotificationType } from '@/features/notifications/notificationSlice';
@@ -53,10 +53,10 @@ export const useToast = () => {
         [showToast]
     );
 
-    return {
+    return useMemo(() => ({
         success,
         error,
         warning,
         info,
-    };
+    }), [success, error, warning, info]);
 };
