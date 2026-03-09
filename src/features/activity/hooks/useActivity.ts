@@ -6,7 +6,7 @@ import { ActivityType, ActivityStatus, ActivityItem } from '../activitySlice';
 
 export const useActivity = () => {
     const dispatch = useDispatch();
-    const socket = useSocket();
+    const { socket } = useSocket();
 
     const addWorkflowActivity = useCallback((
         type: ActivityType,

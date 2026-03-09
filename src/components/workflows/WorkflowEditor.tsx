@@ -20,6 +20,8 @@ import {
     Tab,
     Box,
     Chip,
+    Skeleton,
+    Tooltip,
 } from '@mui/material';
 import { Save, Publish, ArrowBack } from '@mui/icons-material';
 
@@ -178,20 +180,35 @@ export const WorkflowEditor: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="p-6">Loading...</div>;
+        return (
+            <div className="p-6" role="status" aria-label="Loading workflow editor">
+                <div className="flex items-center gap-4 mb-6">
+                    <Skeleton variant="rounded" width={100} height={36} />
+                    <div>
+                        <Skeleton variant="text" width={250} height={36} />
+                        <Skeleton variant="text" width={150} height={20} />
+                    </div>
+                </div>
+                <Skeleton variant="rounded" width="100%" height={48} className="mb-6" />
+                <Skeleton variant="rounded" width="100%" height={300} />
+            </div>
+        );
     }
 
     return (
         <div className="p-6">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <Button
-                        startIcon={<ArrowBack />}
-                        onClick={() => navigate('/workflows')}
-                        variant="outlined"
-                    >
-                        Back
-                    </Button>
+                    <Tooltip title="Back to workflow list">
+                        <Button
+                            startIcon={<ArrowBack />}
+                            onClick={() => navigate('/workflows')}
+                            variant="outlined"
+                            aria-label="Go back to workflow list"
+                        >
+                            Back
+                        </Button>
+                    </Tooltip>
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                             {isNewWorkflow ? 'Create Workflow' : 'Edit Workflow'}
@@ -206,29 +223,39 @@ export const WorkflowEditor: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                        variant="outlined"
-                        startIcon={<Save />}
-                        onClick={handleSave}
-                        disabled={!canEdit}
-                    >
-                        Save Draft
-                    </Button>
+                    <Tooltip title={canEdit ? 'Save current changes as draft' : 'You do not have permission to edit'}>
+                        <span>
+                            <Button
+                                variant="outlined"
+                                startIcon={<Save />}
+                                onClick={handleSave}
+                                disabled={!canEdit}
+                                aria-label="Save workflow as draft"
+                            >
+                                Save Draft
+                            </Button>
+                        </span>
+                    </Tooltip>
                     {!isNewWorkflow && (
-                        <Button
-                            variant="contained"
-                            startIcon={<Publish />}
-                            onClick={handlePublish}
-                            disabled={!canPublish}
-                        >
-                            Publish
-                        </Button>
+                        <Tooltip title={canPublish ? 'Publish this workflow' : 'You do not have permission to publish'}>
+                            <span>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<Publish />}
+                                    onClick={handlePublish}
+                                    disabled={!canPublish}
+                                    aria-label="Publish workflow"
+                                >
+                                    Publish
+                                </Button>
+                            </span>
+                        </Tooltip>
                     )}
                 </div>
             </div>
 
             <Paper className="mb-6">
-                <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
+                <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} aria-label="Workflow editor sections">
                     <Tab label="Details" />
                     <Tab label="Steps" />
                     {!isNewWorkflow && <Tab label="Versions" />}

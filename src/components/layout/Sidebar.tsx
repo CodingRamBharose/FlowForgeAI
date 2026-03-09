@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/store';
 import {
     Drawer,
     List,
@@ -10,6 +12,9 @@ import {
     IconButton,
     Tooltip,
     useTheme,
+    Badge,
+    Typography,
+    Collapse,
 } from '@mui/material';
 import {
     Dashboard as DashboardIcon,
@@ -18,6 +23,10 @@ import {
     Settings as SettingsIcon,
     ChevronLeft,
     ChevronRight,
+    Add as AddIcon,
+    ExpandLess,
+    ExpandMore,
+    FolderOpen,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 260;
@@ -27,22 +36,44 @@ interface NavItem {
     label: string;
     path: string;
     icon: React.ReactNode;
+    badge?: number;
+    children?: { label: string; path: string; icon?: React.ReactNode }[];
 }
-
-const navItems: NavItem[] = [
-    { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-    { label: 'Workflows', path: '/workflows', icon: <WorkflowIcon /> },
-    { label: 'Audit Trail', path: '/audit', icon: <HistoryIcon /> },
-    { label: 'Settings', path: '/settings', icon: <SettingsIcon /> },
-];
 
 export const Sidebar: React.FC = () => {
     const [collapsed, setCollapsed] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ Workflows: true });
     const location = useLocation();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
+    const workflows = useSelector((state: RootState) => state.workflows.workflows);
+    const pendingCount = workflows.filter((w) => w.status === 'PENDING_APPROVAL').length;
 
     const toggleCollapse = () => setCollapsed(!collapsed);
+    const toggleGroup = (label: string) => {
+        setExpandedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+    };
+
+    const navItems: NavItem[] = [
+        { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
+        {
+            label: 'Workflows',
+            path: '/workflows',
+            icon: <WorkflowIcon />,
+            badge: pendingCount,
+            children: [
+                { label: 'All Workflows', path: '/workflows', icon: <FolderOpen /> },
+                { label: 'Create New', path: '/workflows/new', icon: <AddIcon /> },
+            ],
+        },
+        { label: 'Audit Trail', path: '/audit', icon: <HistoryIcon /> },
+        { label: 'Settings', path: '/settings', icon: <SettingsIcon /> },
+    ];
+
+    const isPathActive = (path: string) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
+    };
 
     return (
         <Drawer
@@ -65,6 +96,7 @@ export const Sidebar: React.FC = () => {
             }}
         >
             <div className="flex flex-col h-full">
+                {/* Brand Header */}
                 <div className={`flex items-center justify-between p-4 border-b relative ${
                     isDark ? 'border-gray-700' : 'border-gray-200'
                 }`}>
@@ -98,6 +130,7 @@ export const Sidebar: React.FC = () => {
                         <IconButton
                             onClick={toggleCollapse}
                             size="small"
+                            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                             className={`transition-colors ${
                                 isDark
                                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -122,62 +155,146 @@ export const Sidebar: React.FC = () => {
                     </Tooltip>
                 </div>
 
-                <List className="flex-1 py-4 px-2">
+                {/* Navigation Label */}
+                {!collapsed && (
+                    <div className="px-4 pt-4 pb-1">
+                        <Typography
+                            variant="caption"
+                            className="font-semibold uppercase"
+                            style={{ fontSize: 10, letterSpacing: 1.5, color: isDark ? '#64748b' : '#94a3b8' }}
+                        >
+                            Navigation
+                        </Typography>
+                    </div>
+                )}
+
+                {/* Nav Items */}
+                <List className="flex-1 py-2 px-2">
                     {navItems.map((item) => {
-                        const isActive = location.pathname === item.path;
+                        const isActive = isPathActive(item.path);
+                        const hasChildren = item.children && item.children.length > 0;
+                        const isExpanded = expandedGroups[item.label];
+
                         return (
-                            <Tooltip
-                                key={item.path}
-                                title={collapsed ? item.label : ''}
-                                placement="right"
-                                arrow
-                            >
-                                <ListItem disablePadding className="mb-1">
-                                    <ListItemButton
-                                        component={Link}
-                                        to={item.path}
-                                        selected={isActive}
-                                        sx={{
-                                            mx: 0.5,
-                                            borderRadius: 2,
-                                            transition: 'all 0.2s',
-                                            '&.Mui-selected': {
-                                                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                                                color: 'white',
-                                                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-                                                },
-                                                '& .MuiListItemIcon-root': {
-                                                    color: 'white',
-                                                },
-                                            },
-                                            '&:hover': {
-                                                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
-                                            },
-                                            color: isActive
-                                                ? 'white'
-                                                : (isDark ? 'rgba(203, 213, 225, 0.8)' : theme.palette.text.secondary),
-                                        }}
-                                    >
-                                        <ListItemIcon
+                            <React.Fragment key={item.path}>
+                                <Tooltip
+                                    title={collapsed ? item.label : ''}
+                                    placement="right"
+                                    arrow
+                                >
+                                    <ListItem disablePadding className="mb-1">
+                                        <ListItemButton
+                                            component={hasChildren && !collapsed ? 'div' : Link}
+                                            to={hasChildren && !collapsed ? undefined : item.path}
+                                            onClick={hasChildren && !collapsed ? () => toggleGroup(item.label) : undefined}
+                                            selected={isActive}
                                             sx={{
-                                                minWidth: collapsed ? 0 : 40,
-                                                justifyContent: 'center',
+                                                mx: 0.5,
+                                                borderRadius: 2,
+                                                transition: 'all 0.2s',
+                                                '&.Mui-selected': {
+                                                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                                                    color: 'white',
+                                                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+                                                    '&:hover': {
+                                                        background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                                                    },
+                                                    '& .MuiListItemIcon-root': {
+                                                        color: 'white',
+                                                    },
+                                                },
+                                                '&:hover': {
+                                                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                                                },
                                                 color: isActive
                                                     ? 'white'
                                                     : (isDark ? 'rgba(203, 213, 225, 0.8)' : theme.palette.text.secondary),
                                             }}
                                         >
-                                            {item.icon}
-                                        </ListItemIcon>
-                                        {!collapsed && <ListItemText primary={item.label} />}
-                                    </ListItemButton>
-                                </ListItem>
-                            </Tooltip>
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: collapsed ? 0 : 40,
+                                                    justifyContent: 'center',
+                                                    color: isActive
+                                                        ? 'white'
+                                                        : (isDark ? 'rgba(203, 213, 225, 0.8)' : theme.palette.text.secondary),
+                                                }}
+                                            >
+                                                {item.badge ? (
+                                                    <Badge badgeContent={item.badge} color="warning" max={9}>
+                                                        {item.icon}
+                                                    </Badge>
+                                                ) : (
+                                                    item.icon
+                                                )}
+                                            </ListItemIcon>
+                                            {!collapsed && (
+                                                <>
+                                                    <ListItemText primary={item.label} />
+                                                    {hasChildren && (isExpanded ? <ExpandLess /> : <ExpandMore />)}
+                                                </>
+                                            )}
+                                        </ListItemButton>
+                                    </ListItem>
+                                </Tooltip>
+
+                                {/* Collapsible children */}
+                                {hasChildren && !collapsed && (
+                                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                                        <List disablePadding>
+                                            {item.children!.map((child) => {
+                                                const isChildActive = location.pathname === child.path;
+                                                return (
+                                                    <ListItem key={child.path} disablePadding>
+                                                        <ListItemButton
+                                                            component={Link}
+                                                            to={child.path}
+                                                            sx={{
+                                                                pl: 5,
+                                                                py: 0.5,
+                                                                mx: 0.5,
+                                                                borderRadius: 1.5,
+                                                                '&:hover': {
+                                                                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.04)',
+                                                                },
+                                                                color: isChildActive
+                                                                    ? (isDark ? '#60a5fa' : '#3b82f6')
+                                                                    : (isDark ? 'rgba(203, 213, 225, 0.6)' : theme.palette.text.secondary),
+                                                            }}
+                                                        >
+                                                            {child.icon && (
+                                                                <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+                                                                    {React.cloneElement(child.icon as React.ReactElement, { fontSize: 'small' })}
+                                                                </ListItemIcon>
+                                                            )}
+                                                            <ListItemText
+                                                                primary={child.label}
+                                                                primaryTypographyProps={{ fontSize: 13 }}
+                                                            />
+                                                        </ListItemButton>
+                                                    </ListItem>
+                                                );
+                                            })}
+                                        </List>
+                                    </Collapse>
+                                )}
+                            </React.Fragment>
                         );
                     })}
                 </List>
+
+                {/* Footer */}
+                {!collapsed && (
+                    <div className={`p-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <Typography
+                            variant="caption"
+                            className="text-center block"
+                            style={{ color: isDark ? '#475569' : '#94a3b8', fontSize: 10 }}
+                        >
+                            FlowForge AI v1.0.0
+                        </Typography>
+                    </div>
+                )}
             </div>
         </Drawer>
     );

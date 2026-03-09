@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Card, CardContent, Typography, Button } from '@mui/material';
-import { AccountTree, CheckCircle, Speed, Security, PlayArrow, CloudUpload, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { AccountTree, CheckCircle, Speed, Security, PlayArrow, CloudUpload, CheckCircle as CheckCircleIcon, TrendingUp } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,9 +8,13 @@ import { WorkflowStatus } from '@/features/workflows/types';
 import { useActivity } from '@/features/activity/hooks/useActivity';
 import { FlexWrapBox } from '@/styles/common';
 import { QuickActionsCard } from './QuickActionsCard';
+import { ExecutionTrendChart, StatusDistributionChart, ModelUsageChart } from './AnalyticsCharts';
+import { StaggerContainer, StaggerItem, AnimatedCounter } from '@/components/ui/PageTransition';
+import { useNavigate } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const workflows = useSelector((state: RootState) => state.workflows.workflows);
     const { simulateDeployment, simulateExecution, simulateValidation } = useActivity();
 
@@ -28,12 +32,11 @@ export const Dashboard: React.FC = () => {
     ];
 
     const statsCards = [
-        { title: "Total Workflows", value: stats.total, icon: AccountTree },
-        { title: "Published", value: stats.published, icon: CheckCircle, color: "text-green-600", iconColor: "text-green-500" },
-        { title: "Drafts", value: stats.draft, icon: Speed, color: "text-gray-600", iconColor: "text-gray-500" },
-        { title: "Pending Approval", value: stats.pending, icon: Security, color: "text-orange-600", iconColor: "text-orange-500" },
+        { title: "Total Workflows", value: stats.total, icon: AccountTree, gradient: 'from-blue-500 to-blue-600', onClick: () => navigate('/workflows') },
+        { title: "Published", value: stats.published, icon: CheckCircle, gradient: 'from-green-500 to-emerald-600', onClick: () => navigate('/workflows') },
+        { title: "Drafts", value: stats.draft, icon: Speed, gradient: 'from-gray-500 to-slate-600', onClick: () => navigate('/workflows') },
+        { title: "Pending Approval", value: stats.pending, icon: Security, gradient: 'from-orange-500 to-amber-600', onClick: () => navigate('/workflows') },
     ];
-
 
     const roleDescriptions = {
         ADMIN: 'You have full access to create, edit, publish, and rollback workflows.',
@@ -42,38 +45,12 @@ export const Dashboard: React.FC = () => {
         VIEWER: 'You have read-only access to view and preview workflows.',
     };
 
-    // Inline StatCard component
-    const StatCard: React.FC<{
-        title: string;
-        value: number | string;
-        icon: React.ComponentType<{ className?: string; fontSize?: 'small' | 'medium' | 'large' }>;
-        color?: string;
-        iconColor?: string;
-    }> = ({ title, value, icon: Icon, color = 'text-gray-900 dark:text-gray-100', iconColor = 'text-primary-500' }) => (
-        <Card>
-            <CardContent>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-1">
-                            {title}
-                        </Typography>
-                        <Typography variant="h4" className={`font-bold ${color}`}>
-                            {value}
-                        </Typography>
-                    </div>
-                    <Icon className={`${iconColor}`} fontSize="large" />
-                </div>
-            </CardContent>
-        </Card>
-    );
-
-    // Inline WelcomeHeader component
-    const WelcomeHeader: React.FC<{ userName?: string }> = ({ userName }) => {
-
-        return (
+    return (
+        <div className="p-6">
+            {/* Welcome Header */}
             <div className="mb-8">
                 <Typography variant="h3" className="font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    Welcome back, {userName}!
+                    Welcome back, {user?.name}!
                 </Typography>
                 <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
                     Here's an overview of your AI workflow orchestration platform
@@ -92,51 +69,82 @@ export const Dashboard: React.FC = () => {
                     ))}
                 </FlexWrapBox>
             </div>
-        );
-    };
 
-    // Inline RoleInfoCard component
-    const RoleInfoCard: React.FC<{ role?: string }> = ({ role }) => {
-        const getRoleDescription = (role?: string) => roleDescriptions[role as keyof typeof roleDescriptions] || 'Your role permissions are being loaded...';
+            {/* Animated Stat Cards */}
+            <StaggerContainer>
+                <Grid container spacing={3} className="mb-8">
+                    {statsCards.map((card) => {
+                        const Icon = card.icon;
+                        return (
+                            <Grid key={card.title} item xs={12} sm={6} md={3}>
+                                <StaggerItem>
+                                    <Card
+                                        sx={{
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            '&:hover': { transform: 'translateY(-4px)' },
+                                        }}
+                                        onClick={card.onClick}
+                                    >
+                                        <CardContent>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-1">
+                                                        {card.title}
+                                                    </Typography>
+                                                    <Typography variant="h3" className="font-bold text-gray-900 dark:text-gray-100">
+                                                        <AnimatedCounter value={card.value} />
+                                                    </Typography>
+                                                </div>
+                                                <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient}`}>
+                                                    <Icon className="text-white" fontSize="large" />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 mt-2">
+                                                <TrendingUp style={{ fontSize: 14 }} className="text-green-500" />
+                                                <Typography variant="caption" className="text-green-500 font-medium">
+                                                    +12% from last week
+                                                </Typography>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </StaggerItem>
+                            </Grid>
+                        );
+                    })}
+                </Grid>
+            </StaggerContainer>
 
-        return (
-            <Card className="h-full">
-                <CardContent className="h-full flex flex-col justify-center">
-                    <Typography variant="h6" className="font-bold mb-4 text-gray-900 dark:text-gray-100">
-                        Your Role: {role || 'Loading...'}
-                    </Typography>
-                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
-                        {getRoleDescription(role)}
-                    </Typography>
-                </CardContent>
-            </Card>
-        );
-    };
-
-    return (
-        <div className="p-6">
-            <WelcomeHeader userName={user?.name} />
+            {/* Analytics Charts */}
+            <Grid container spacing={3} className="mb-8">
+                <Grid item xs={12} md={8}>
+                    <ExecutionTrendChart />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <StatusDistributionChart />
+                </Grid>
+            </Grid>
 
             <Grid container spacing={3} className="mb-8">
-                {statsCards.map((card) => (
-                    <Grid key={card.title} item xs={12} sm={6} md={3}>
-                        <StatCard
-                            title={card.title}
-                            value={card.value}
-                            icon={card.icon}
-                            color={card.color}
-                            iconColor={card.iconColor}
-                        />
-                    </Grid>
-                ))}
+                <Grid item xs={12} md={6}>
+                    <ModelUsageChart />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <Card className="h-full">
+                        <CardContent className="h-full flex flex-col justify-center">
+                            <Typography variant="h6" className="font-bold mb-4 text-gray-900 dark:text-gray-100">
+                                Your Role: {user?.role || 'Loading...'}
+                            </Typography>
+                            <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                                {roleDescriptions[user?.role as keyof typeof roleDescriptions] || 'Your role permissions are being loaded...'}
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
             </Grid>
 
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                    <RoleInfoCard role={user?.role} />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12}>
                     <QuickActionsCard />
                 </Grid>
             </Grid>

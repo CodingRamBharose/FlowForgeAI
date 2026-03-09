@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
 import { mockUsers, generateMockToken, generateMockRefreshToken } from '@/utils/mockData';
+import { loginSchema, LoginFormData } from '@/features/auth/schemas';
 import {
     Paper,
     TextField,
@@ -14,11 +16,6 @@ import {
 } from '@mui/material';
 import { Login as LoginIcon, Visibility, VisibilityOff, AccountTree } from '@mui/icons-material';
 
-interface LoginFormData {
-    email: string;
-    password: string;
-}
-
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
@@ -29,7 +26,9 @@ export const LoginPage: React.FC = () => {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
-    } = useForm<LoginFormData>();
+    } = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+    });
 
     const onSubmit = (data: LoginFormData) => {
         setError('');
@@ -83,13 +82,7 @@ export const LoginPage: React.FC = () => {
                         fullWidth
                         label="Email Address"
                         type="email"
-                        {...register('email', {
-                            required: 'Email is required',
-                            pattern: {
-                                value: /^\S+@\S+$/i,
-                                message: 'Invalid email address',
-                            },
-                        })}
+                        {...register('email')}
                         error={!!errors.email}
                         helperText={errors.email?.message}
                         placeholder="Enter your email"
@@ -108,7 +101,7 @@ export const LoginPage: React.FC = () => {
                         fullWidth
                         label="Password"
                         type={showPassword ? 'text' : 'password'}
-                        {...register('password', { required: 'Password is required' })}
+                        {...register('password')}
                         error={!!errors.password}
                         helperText={errors.password?.message}
                         placeholder="Enter your password"

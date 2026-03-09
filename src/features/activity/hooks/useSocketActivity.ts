@@ -11,7 +11,7 @@ interface ActivityUpdateData {
 type SocketActivityData = ActivityItem | ActivityUpdateData;
 
 export const useSocketActivity = () => {
-    const socket = useSocket();
+    const { socket } = useSocket();
     const dispatch = useDispatch();
 
     useEffect(() => {

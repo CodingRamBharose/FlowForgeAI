@@ -1,6 +1,6 @@
 import React from 'react';
 import { CardContent, Chip, IconButton, Menu, MenuItem, Divider } from '@mui/material';
-import { MoreVert, Edit, Visibility, Delete, Publish } from '@mui/icons-material';
+import { MoreVert, Edit, Visibility, Delete, Publish, FileDownload } from '@mui/icons-material';
 import { Workflow, WorkflowStatus, Environment } from '@/features/workflows/types';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,6 +13,7 @@ interface WorkflowCardProps {
     workflow: Workflow;
     onDelete?: (id: string) => void;
     onPublish?: (id: string, environment: Environment) => void;
+    onExport?: (workflow: Workflow) => void;
 }
 
 const statusColors = {
@@ -30,7 +31,7 @@ const getWorkflowCardChips = (workflow: Workflow) => [
 
 const getStatusColor = (status: WorkflowStatus) => statusColors[status] || 'default';
 
-export const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onDelete, onPublish }) => {
+export const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onDelete, onPublish, onExport }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const { checkPermission } = useAuth();
 
@@ -122,6 +123,10 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onDelete, 
                 <MenuItem onClick={handlePublishClick} disabled={!canPublish}>
                     <Publish fontSize="small" className="mr-2" />
                     Publish
+                </MenuItem>
+                <MenuItem onClick={() => { onExport?.(workflow); handleMenuClose(); }}>
+                    <FileDownload fontSize="small" className="mr-2" />
+                    Export
                 </MenuItem>
                 <Divider />
                 <MenuItem onClick={handleDeleteClick} disabled={!canDelete} sx={{ color: 'error.main' }}>

@@ -1,15 +1,29 @@
+import React, { Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './layouts/app-layout';
 import { AuthLayout } from './layouts/auth-layout';
 import { ProtectedRoute } from './protected-route';
-import { LoginPage } from '@/components/auth/LoginPage';
-import { Dashboard } from '@/components/dashboard/Dashboard';
-import { WorkflowsList } from '@/components/workflows/WorkflowsList';
-import { WorkflowEditor } from '@/components/workflows/WorkflowEditor';
-import { WorkflowPreview } from '@/components/workflows/WorkflowPreview';
-import { AuditPage } from '@/components/audit/AuditPage';
-import { SettingsPage } from '@/components/settings/SettingsPage';
 import { Permission } from '@/types/permissions';
+import { CircularProgress, Box } from '@mui/material';
+
+// Lazy-loaded route components for code splitting
+const LoginPage = React.lazy(() => import('@/components/auth/LoginPage').then((m) => ({ default: m.LoginPage })));
+const Dashboard = React.lazy(() => import('@/components/dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
+const WorkflowsList = React.lazy(() => import('@/components/workflows/WorkflowsList').then((m) => ({ default: m.WorkflowsList })));
+const WorkflowEditor = React.lazy(() => import('@/components/workflows/WorkflowEditor').then((m) => ({ default: m.WorkflowEditor })));
+const WorkflowPreview = React.lazy(() => import('@/components/workflows/WorkflowPreview').then((m) => ({ default: m.WorkflowPreview })));
+const AuditPage = React.lazy(() => import('@/components/audit/AuditPage').then((m) => ({ default: m.AuditPage })));
+const SettingsPage = React.lazy(() => import('@/components/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+
+const PageLoader = () => (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+    </Box>
+);
+
+const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <Suspense fallback={<PageLoader />}>{children}</Suspense>
+);
 
 export const router = createBrowserRouter([
     {
@@ -22,30 +36,30 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Dashboard />,
+                element: <SuspenseWrapper><Dashboard /></SuspenseWrapper>,
             },
             {
                 path: 'workflows',
                 children: [
                     {
                         index: true,
-                        element: <WorkflowsList />,
+                        element: <SuspenseWrapper><WorkflowsList /></SuspenseWrapper>,
                     },
                     {
                         path: 'new',
                         element: (
                             <ProtectedRoute requiredPermission={Permission.WORKFLOW_CREATE}>
-                                <WorkflowEditor />
+                                <SuspenseWrapper><WorkflowEditor /></SuspenseWrapper>
                             </ProtectedRoute>
                         ),
                     },
                     {
                         path: ':id',
-                        element: <WorkflowEditor />,
+                        element: <SuspenseWrapper><WorkflowEditor /></SuspenseWrapper>,
                     },
                     {
                         path: ':id/preview',
-                        element: <WorkflowPreview />,
+                        element: <SuspenseWrapper><WorkflowPreview /></SuspenseWrapper>,
                     },
                 ],
             },
@@ -53,13 +67,13 @@ export const router = createBrowserRouter([
                 path: 'audit',
                 element: (
                     <ProtectedRoute requiredPermission={Permission.AUDIT_VIEW}>
-                        <AuditPage />
+                        <SuspenseWrapper><AuditPage /></SuspenseWrapper>
                     </ProtectedRoute>
                 ),
             },
             {
                 path: 'settings',
-                element: <SettingsPage />,
+                element: <SuspenseWrapper><SettingsPage /></SuspenseWrapper>,
             },
         ],
     },
@@ -69,13 +83,13 @@ export const router = createBrowserRouter([
         children: [
             {
                 path: 'login',
-                element: <LoginPage />,
+                element: <SuspenseWrapper><LoginPage /></SuspenseWrapper>,
             },
         ],
     },
     {
         path: '/login',
-        element: <LoginPage />,
+        element: <SuspenseWrapper><LoginPage /></SuspenseWrapper>,
     },
     {
         path: '*',

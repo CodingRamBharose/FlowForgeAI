@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs } from './Breadcrumbs';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { ConnectionStatus } from '@/components/ui/ConnectionStatus';
 import {
     IconButton,
     Avatar,
@@ -10,6 +12,8 @@ import {
     MenuItem,
     Divider,
     Typography,
+    Tooltip,
+    Chip,
 } from '@mui/material';
 import {
     Person,
@@ -18,11 +22,13 @@ import {
     DarkMode,
     LightMode,
     Notifications,
+    Search as SearchIcon,
 } from '@mui/icons-material';
 
 export const Header: React.FC = () => {
     const { user, logout } = useAuth();
     const { mode, toggleTheme } = useTheme();
+    const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
 
@@ -55,13 +61,40 @@ export const Header: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-3 ml-auto">
-                    <IconButton onClick={toggleTheme} size="small" className="hidden md:inline-flex">
-                        {mode === 'dark' ? <LightMode /> : <DarkMode />}
-                    </IconButton>
+                    {/* Search trigger */}
+                    <div
+                        onClick={() => {
+                            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+                        }}
+                        className="hidden md:flex items-center gap-2 px-4 py-1.5 min-w-[280px] rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Open command palette (Ctrl+K)"
+                        onKeyDown={(e) => { if (e.key === 'Enter') { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true })); } }}
+                    >
+                        <SearchIcon style={{ fontSize: 16 }} className="text-gray-400" />
+                        <span className="text-sm text-gray-400 flex-1">Search...</span>
+                        <Chip
+                            label="Ctrl+K"
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: 10, height: 20, ml: 'auto' }}
+                        />
+                    </div>
 
-                    <IconButton onClick={handleNotificationClick} size="small">
-                        <Notifications />
-                    </IconButton>
+                    <ConnectionStatus />
+
+                    <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+                        <IconButton onClick={toggleTheme} size="small" className="hidden md:inline-flex" aria-label="Toggle theme">
+                            {mode === 'dark' ? <LightMode /> : <DarkMode />}
+                        </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Notifications">
+                        <IconButton onClick={handleNotificationClick} size="small" aria-label="Open notifications">
+                            <Notifications />
+                        </IconButton>
+                    </Tooltip>
 
                     <NotificationCenter
                         anchorEl={notificationAnchor}
@@ -69,18 +102,20 @@ export const Header: React.FC = () => {
                         onClose={handleNotificationClose}
                     />
 
-                    <IconButton onClick={handleMenuClick} size="small">
-                        <Avatar
-                            sx={{
-                                width: 36,
-                                height: 36,
-                                bgcolor: 'primary.main',
-                                fontSize: '0.875rem',
-                            }}
-                        >
-                            {user?.name.charAt(0)}
-                        </Avatar>
-                    </IconButton>
+                    <Tooltip title="Account menu">
+                        <IconButton onClick={handleMenuClick} size="small" aria-label="Open account menu">
+                            <Avatar
+                                sx={{
+                                    width: 36,
+                                    height: 36,
+                                    bgcolor: 'primary.main',
+                                    fontSize: '0.875rem',
+                                }}
+                            >
+                                {user?.name.charAt(0)}
+                            </Avatar>
+                        </IconButton>
+                    </Tooltip>
 
                     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                         <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -91,11 +126,11 @@ export const Header: React.FC = () => {
                                 {user?.email}
                             </Typography>
                         </div>
-                        <MenuItem onClick={handleMenuClose}>
+                        <MenuItem onClick={() => { navigate('/settings'); handleMenuClose(); }}>
                             <Person fontSize="small" className="mr-2" />
                             Profile
                         </MenuItem>
-                        <MenuItem onClick={handleMenuClose}>
+                        <MenuItem onClick={() => { navigate('/settings'); handleMenuClose(); }}>
                             <Settings fontSize="small" className="mr-2" />
                             Settings
                         </MenuItem>

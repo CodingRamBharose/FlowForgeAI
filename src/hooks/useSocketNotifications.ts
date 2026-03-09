@@ -10,7 +10,7 @@ interface SocketNotificationData {
 }
 
 export const useSocketNotifications = () => {
-    const socket = useSocket();
+    const { socket } = useSocket();
     const dispatch = useDispatch();
 
     useEffect(() => {

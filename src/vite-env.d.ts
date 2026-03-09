@@ -5,8 +5,9 @@ interface ImportMetaEnv {
     readonly VITE_API_BASE_URL: string;
     readonly VITE_ENABLE_MOCK_API: string;
     readonly VITE_FEATURE_VERSIONING: string;
-    readonly VITE_FEATURE_AUDIT_TRAIL: string;
-}
+    readonly VITE_FEATURE_AUDIT_TRAIL: string;    readonly MODE: string;
+    readonly DEV: boolean;
+    readonly PROD: boolean;}
 
 interface ImportMeta {
     readonly env: ImportMetaEnv;
